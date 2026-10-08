@@ -1,0 +1,2326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NetRoute - Packet Routing Simulator</title>
+
+<style>
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+}
+
+body {
+    background: #f3f6fa;
+    color: #172033;
+    transition: .3s;
+}
+
+body.dark {
+    background: #0c1322;
+    color: #e8edf7;
+}
+
+button {
+    cursor: pointer;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* ================= AUTH ================= */
+
+#authPage {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg,#071b35,#0077ff,#00bcd4);
+}
+
+.auth-box {
+    width: 420px;
+    max-width: 94%;
+    background: white;
+    padding: 35px;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.3);
+}
+
+.auth-box h1 {
+    text-align: center;
+    color: #0878ff;
+    margin-bottom: 8px;
+}
+
+.auth-box .subtitle {
+    text-align: center;
+    color: #777;
+    margin-bottom: 25px;
+}
+
+.input-group {
+    margin-bottom: 15px;
+}
+
+.input-group label {
+    display: block;
+    margin-bottom: 7px;
+    font-weight: bold;
+}
+
+.input-group input,
+.input-group select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #d5dce5;
+    border-radius: 8px;
+    outline: none;
+}
+
+.input-group input:focus,
+.input-group select:focus {
+    border-color: #0878ff;
+}
+
+.password {
+    position: relative;
+}
+
+.password input {
+    padding-right: 55px;
+}
+
+.password span {
+    position: absolute;
+    right: 14px;
+    top: 12px;
+    cursor: pointer;
+    color: #0878ff;
+}
+
+.auth-btn {
+    width: 100%;
+    padding: 13px;
+    border: none;
+    background: #0878ff;
+    color: white;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.switch {
+    text-align: center;
+    margin-top: 18px;
+}
+
+.switch span {
+    color: #0878ff;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.demo {
+    margin-top: 18px;
+    padding: 12px;
+    background: #edf6ff;
+    border-radius: 8px;
+    font-size: 13px;
+}
+
+/* ================= APP ================= */
+
+#app {
+    display: none;
+}
+
+.sidebar {
+    position: fixed;
+    width: 245px;
+    height: 100vh;
+    background: #071b35;
+    color: white;
+    padding: 22px 14px;
+    overflow-y: auto;
+}
+
+.logo {
+    text-align: center;
+    font-size: 25px;
+    font-weight: bold;
+    margin-bottom: 28px;
+}
+
+.logo span {
+    color: #00d4ff;
+}
+
+.sidebar button {
+    width: 100%;
+    padding: 12px;
+    margin: 4px 0;
+    border: none;
+    background: transparent;
+    color: white;
+    text-align: left;
+    border-radius: 8px;
+}
+
+.sidebar button:hover {
+    background: #12385e;
+}
+
+.sidebar .logout {
+    background: #e63946;
+    margin-top: 25px;
+}
+
+.main {
+    margin-left: 245px;
+    min-height: 100vh;
+}
+
+.topbar {
+    height: 70px;
+    background: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 25px;
+    box-shadow: 0 2px 10px rgba(0,0,0,.08);
+}
+
+.dark .topbar {
+    background: #172236;
+}
+
+.topbar h2 {
+    color: #0878ff;
+}
+
+.top-actions button {
+    border: none;
+    padding: 9px 12px;
+    margin-left: 5px;
+    border-radius: 7px;
+}
+
+.content {
+    padding: 25px;
+}
+
+.page {
+    display: none;
+}
+
+.page.active {
+    display: block;
+}
+
+/* ================= DASHBOARD ================= */
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(4,1fr);
+    gap: 18px;
+    margin: 20px 0;
+}
+
+.stat {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 14px rgba(0,0,0,.06);
+}
+
+.dark .stat,
+.dark .card,
+.dark .table-container {
+    background: #172236;
+}
+
+.stat p {
+    color: #777;
+    font-size: 14px;
+}
+
+.stat strong {
+    display: block;
+    font-size: 28px;
+    margin-top: 8px;
+    color: #0878ff;
+}
+
+.card {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 14px rgba(0,0,0,.06);
+}
+
+/* ================= NETWORK ================= */
+
+.network-area {
+    position: relative;
+    height: 500px;
+    background: #08192d;
+    border-radius: 15px;
+    overflow: hidden;
+    border: 2px solid #163b63;
+}
+
+.network-area::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(#12365a 1px, transparent 1px),
+        linear-gradient(90deg,#12365a 1px,transparent 1px);
+    background-size: 40px 40px;
+    opacity: .3;
+}
+
+.node {
+    position: absolute;
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: #0878ff;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    z-index: 3;
+    box-shadow: 0 0 20px rgba(0,130,255,.5);
+}
+
+.node.router {
+    background: #8e44ad;
+}
+
+.node.server {
+    background: #16a085;
+}
+
+.node.pc {
+    background: #2980b9;
+}
+
+.node.online {
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    50% {
+        box-shadow: 0 0 35px #00d4ff;
+    }
+}
+
+.connection {
+    position: absolute;
+    height: 4px;
+    background: #4f7195;
+    transform-origin: left center;
+    z-index: 1;
+}
+
+.connection.active {
+    background: #00e5ff;
+    box-shadow: 0 0 12px #00e5ff;
+}
+
+.packet {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    background: #ffdf00;
+    border-radius: 50%;
+    z-index: 5;
+    box-shadow: 0 0 15px #ffdf00;
+}
+
+/* ================= TABLE ================= */
+
+.table-container {
+    overflow-x: auto;
+    background: white;
+    border-radius: 12px;
+    padding: 15px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th,
+td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+th {
+    color: #0878ff;
+}
+
+.badge {
+    padding: 5px 9px;
+    border-radius: 15px;
+    font-size: 12px;
+}
+
+.success {
+    background: #d8f8e1;
+    color: #16753a;
+}
+
+.warning {
+    background: #fff1c7;
+    color: #8c6800;
+}
+
+.danger {
+    background: #ffdadd;
+    color: #b5202d;
+}
+
+/* ================= FORMS ================= */
+
+.primary {
+    border: none;
+    padding: 11px 16px;
+    background: #0878ff;
+    color: white;
+    border-radius: 7px;
+}
+
+.secondary {
+    border: none;
+    padding: 11px 16px;
+    background: #e8eef5;
+    color: #222;
+    border-radius: 7px;
+}
+
+.search {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #d5dce5;
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+
+/* ================= LOGS ================= */
+
+.log {
+    padding: 12px;
+    border-left: 4px solid #0878ff;
+    background: #f3f7fc;
+    margin-bottom: 8px;
+    border-radius: 5px;
+}
+
+.dark .log {
+    background: #111b2d;
+}
+
+/* ================= MODAL ================= */
+
+.modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.65);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+}
+
+.modal-box {
+    width: 450px;
+    max-width: 94%;
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+}
+
+.close {
+    float: right;
+    border: none;
+    background: transparent;
+    font-size: 24px;
+}
+
+/* ================= RESPONSIVE ================= */
+
+@media(max-width:1000px) {
+    .stats {
+        grid-template-columns: repeat(2,1fr);
+    }
+}
+
+@media(max-width:700px) {
+
+    .sidebar {
+        width: 65px;
+        padding: 12px 6px;
+    }
+
+    .sidebar button {
+        font-size: 0;
+        text-align: center;
+    }
+
+    .logo {
+        font-size: 0;
+    }
+
+    .logo::after {
+        content: "NR";
+        font-size: 20px;
+    }
+
+    .main {
+        margin-left: 65px;
+    }
+
+    .stats {
+        grid-template-columns: 1fr;
+    }
+
+}
+</style>
+</head>
+
+<body>
+
+<!-- ==================================================
+AUTHENTICATION
+================================================== -->
+
+<div id="authPage">
+
+<div class="auth-box">
+
+<h1>🌐 NetRoute</h1>
+
+<p class="subtitle">
+Packet Routing Simulator
+</p>
+
+<!-- LOGIN -->
+
+<div id="loginForm">
+
+<div class="input-group">
+<label>Email</label>
+<input id="loginEmail"
+placeholder="Enter email">
+</div>
+
+<div class="input-group">
+<label>Password</label>
+
+<div class="password">
+
+<input type="password"
+id="loginPassword"
+placeholder="Enter password">
+
+<span onclick="togglePassword('loginPassword')">
+👁
+</span>
+
+</div>
+</div>
+
+<button class="auth-btn"
+onclick="login()">
+Login
+</button>
+
+<div class="switch">
+Don't have an account?
+<span onclick="showSignup()">Sign Up</span>
+</div>
+
+<div class="demo">
+
+<b>Demo Login</b><br>
+
+Email:
+admin@netroute.com
+
+<br>
+
+Password:
+admin123
+
+</div>
+
+</div>
+
+
+<!-- SIGNUP -->
+
+<div id="signupForm"
+class="hidden">
+
+<div class="input-group">
+<label>Full Name</label>
+<input id="signupName"
+placeholder="Enter name">
+</div>
+
+<div class="input-group">
+<label>Email</label>
+<input id="signupEmail"
+placeholder="Enter email">
+</div>
+
+<div class="input-group">
+
+<label>Password</label>
+
+<div class="password">
+
+<input type="password"
+id="signupPassword"
+placeholder="Create password">
+
+<span onclick="togglePassword('signupPassword')">
+👁
+</span>
+
+</div>
+
+</div>
+
+<button class="auth-btn"
+onclick="signup()">
+Create Account
+</button>
+
+<div class="switch">
+
+Already have an account?
+
+<span onclick="showLogin()">
+Login
+</span>
+
+</div>
+
+</div>
+
+</div>
+</div>
+
+
+<!-- ==================================================
+APPLICATION
+================================================== -->
+
+<div id="app">
+
+<aside class="sidebar">
+
+<div class="logo">
+🌐 Net<span>Route</span>
+</div>
+
+<button onclick="showPage('dashboard')">
+🏠 Dashboard
+</button>
+
+<button onclick="showPage('simulator')">
+📡 Packet Simulator
+</button>
+
+<button onclick="showPage('topology')">
+🔗 Network Topology
+</button>
+
+<button onclick="showPage('routing')">
+🛣 Routing Table
+</button>
+
+<button onclick="showPage('packets')">
+📦 Packet Logs
+</button>
+
+<button onclick="showPage('analytics')">
+📊 Analytics
+</button>
+
+<button onclick="showPage('notifications')">
+🔔 Notifications
+</button>
+
+<button onclick="showPage('profile')">
+👤 Profile
+</button>
+
+<button onclick="showPage('security')">
+🔐 Security
+</button>
+
+<button onclick="showPage('admin')">
+⚙ Admin
+</button>
+
+<button class="logout"
+onclick="logout()">
+🚪 Logout
+</button>
+
+</aside>
+
+
+<main class="main">
+
+<header class="topbar">
+
+<h2 id="pageTitle">
+Dashboard
+</h2>
+
+<div class="top-actions">
+
+<button onclick="toggleDarkMode()">
+🌙
+</button>
+
+<button onclick="showPage('notifications')">
+🔔
+</button>
+
+<button onclick="showPage('profile')">
+👤 <span id="topUser">User</span>
+</button>
+
+</div>
+
+</header>
+
+
+<div class="content">
+
+<!-- ==================================================
+DASHBOARD
+================================================== -->
+
+<section id="dashboard"
+class="page active">
+
+<h2>Network Dashboard</h2>
+
+<p>
+Monitor and simulate your computer network.
+</p>
+
+<div class="stats">
+
+<div class="stat">
+<p>Network Nodes</p>
+<strong id="nodeCount">6</strong>
+</div>
+
+<div class="stat">
+<p>Packets Sent</p>
+<strong id="packetCount">0</strong>
+</div>
+
+<div class="stat">
+<p>Successful Routes</p>
+<strong id="successCount">0</strong>
+</div>
+
+<div class="stat">
+<p>Failed Routes</p>
+<strong id="failedCount">0</strong>
+</div>
+
+</div>
+
+
+<div class="card">
+
+<h3>🚀 Quick Packet Test</h3>
+
+<br>
+
+<button class="primary"
+onclick="quickPacket()">
+Send Test Packet
+</button>
+
+<button class="secondary"
+onclick="clearLogs()">
+Clear Logs
+</button>
+
+</div>
+
+
+<div class="card">
+
+<h3>Network Status</h3>
+
+<br>
+
+<p>🟢 Router R1 — Online</p>
+<p>🟢 Router R2 — Online</p>
+<p>🟢 Router R3 — Online</p>
+<p>🟢 Server S1 — Online</p>
+<p>🟢 PC A — Online</p>
+<p>🟢 PC B — Online</p>
+
+</div>
+
+</section>
+
+
+<!-- ==================================================
+PACKET SIMULATOR
+================================================== -->
+
+<section id="simulator"
+class="page">
+
+<h2>📡 Packet Routing Simulator</h2>
+
+<br>
+
+<div class="card">
+
+<div class="input-group">
+
+<label>Source Device</label>
+
+<select id="source">
+
+<option>PC-A</option>
+<option>R1</option>
+<option>R2</option>
+<option>R3</option>
+<option>Server-S1</option>
+
+</select>
+
+</div>
+
+
+<div class="input-group">
+
+<label>Destination Device</label>
+
+<select id="destination">
+
+<option>PC-B</option>
+<option>Server-S1</option>
+<option>R3</option>
+<option>R2</option>
+<option>PC-A</option>
+
+</select>
+
+</div>
+
+
+<div class="input-group">
+
+<label>Protocol</label>
+
+<select id="protocol">
+
+<option>TCP</option>
+<option>UDP</option>
+<option>HTTP</option>
+<option>DNS</option>
+<option>ICMP</option>
+</select>
+
+</div>
+
+
+<div class="input-group">
+
+<label>Packet Size</label>
+
+<input type="number"
+id="packetSize"
+value="1024">
+</div>
+
+
+<button class="primary"
+onclick="sendPacket()">
+🚀 Send Packet
+</button>
+
+</div>
+
+
+<div class="network-area"
+id="networkArea">
+
+<div class="node pc"
+id="nodeA"
+style="left:8%;top:35%;">
+PC-A
+</div>
+
+<div class="node router"
+id="nodeR1"
+style="left:30%;top:20%;">
+R1
+</div>
+
+<div class="node router"
+id="nodeR2"
+style="left:52%;top:50%;">
+R2
+</div>
+
+<div class="node router"
+id="nodeR3"
+style="left:72%;top:20%;">
+R3
+</div>
+
+<div class="node server"
+id="nodeS1"
+style="left:82%;top:65%;">
+S1
+</div>
+
+<div class="node pc"
+id="nodeB"
+style="left:10%;top:70%;">
+PC-B
+</div>
+
+</div>
+
+</section>
+
+
+<!-- ==================================================
+TOPOLOGY
+================================================== -->
+
+<section id="topology"
+class="page">
+
+<h2>🔗 Network Topology</h2>
+
+<br>
+
+<div class="card">
+
+<h3>Network Configuration</h3>
+
+<br>
+
+<p>
+Topology Type:
+<b>Hybrid Mesh Network</b>
+</p>
+
+<p>
+Routing Protocol:
+<b>Shortest Path Simulation</b>
+</p>
+
+<p>
+Network Status:
+<span class="badge success">
+ONLINE
+</span>
+</p>
+
+</div>
+
+
+<div class="card">
+
+<h3>Connected Devices</h3>
+
+<br>
+
+<div class="table-container">
+
+<table>
+
+<thead>
+
+<tr>
+<th>Device</th>
+<th>Type</th>
+<th>IP Address</th>
+<th>Status</th>
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+<td>PC-A</td>
+<td>Computer</td>
+<td>192.168.1.10</td>
+<td>
+<span class="badge success">Online</span>
+</td>
+</tr>
+
+<tr>
+<td>R1</td>
+<td>Router</td>
+<td>192.168.1.1</td>
+<td>
+<span class="badge success">Online</span>
+</td>
+</tr>
+
+<tr>
+<td>R2</td>
+<td>Router</td>
+<td>192.168.2.1</td>
+<td>
+<span class="badge success">Online</span>
+</td>
+</tr>
+
+<tr>
+<td>R3</td>
+<td>Router</td>
+<td>192.168.3.1</td>
+<td>
+<span class="badge success">Online</span>
+</td>
+</tr>
+
+<tr>
+<td>S1</td>
+<td>Server</td>
+<td>10.0.0.10</td>
+<td>
+<span class="badge success">Online</span>
+</td>
+</tr>
+
+<tr>
+<td>PC-B</td>
+<td>Computer</td>
+<td>192.168.4.10</td>
+<td>
+<span class="badge success">Online</span>
+</td>
+</tr>
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+</section>
+
+
+<!-- ==================================================
+ROUTING TABLE
+================================================== -->
+
+<section id="routing"
+class="page">
+
+<h2>🛣 Routing Table</h2>
+
+<br>
+
+<div class="table-container">
+
+<table>
+
+<thead>
+
+<tr>
+<th>Router</th>
+<th>Destination</th>
+<th>Next Hop</th>
+<th>Interface</th>
+<th>Metric</th>
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+<td>R1</td>
+<td>192.168.2.0/24</td>
+<td>192.168.1.2</td>
+<td>eth0</td>
+<td>1</td>
+</tr>
+
+<tr>
+<td>R1</td>
+<td>192.168.3.0/24</td>
+<td>192.168.2.1</td>
+<td>eth1</td>
+<td>2</td>
+</tr>
+
+<tr>
+<td>R2</td>
+<td>192.168.4.0/24</td>
+<td>192.168.3.1</td>
+<td>eth0</td>
+<td>1</td>
+</tr>
+
+<tr>
+<td>R3</td>
+<td>10.0.0.0/24</td>
+<td>10.0.0.1</td>
+<td>eth1</td>
+<td>1</td>
+</tr>
+
+</tbody>
+
+</table>
+
+</div>
+
+</section>
+
+
+<!-- ==================================================
+PACKET LOGS
+================================================== -->
+
+<section id="packets"
+class="page">
+
+<h2>📦 Packet Logs</h2>
+
+<br>
+
+<input class="search"
+id="logSearch"
+placeholder="Search packet logs..."
+onkeyup="filterLogs()">
+
+<div id="packetLogs"></div>
+
+</section>
+
+
+<!-- ==================================================
+ANALYTICS
+================================================== -->
+
+<section id="analytics"
+class="page">
+
+<h2>📊 Network Analytics</h2>
+
+<br>
+
+<div class="stats">
+
+<div class="stat">
+<p>Total Packets</p>
+<strong id="analyticsPackets">0</strong>
+</div>
+
+<div class="stat">
+<p>TCP Packets</p>
+<strong id="tcpPackets">0</strong>
+</div>
+
+<div class="stat">
+<p>UDP Packets</p>
+<strong id="udpPackets">0</strong>
+</div>
+
+<div class="stat">
+<p>Average Latency</p>
+<strong id="latency">24 ms</strong>
+</div>
+
+</div>
+
+
+<div class="card">
+
+<h3>Protocol Distribution</h3>
+
+<br>
+
+<p>TCP</p>
+
+<progress value="70" max="100"></progress>
+
+<br><br>
+
+<p>UDP</p>
+
+<progress value="45" max="100"></progress>
+
+<br><br>
+
+<p>HTTP</p>
+
+<progress value="35" max="100"></progress>
+
+<br><br>
+
+<p>DNS</p>
+
+<progress value="20" max="100"></progress>
+
+</div>
+
+</section>
+
+
+<!-- ==================================================
+NOTIFICATIONS
+================================================== -->
+
+<section id="notifications"
+class="page">
+
+<h2>🔔 Notifications</h2>
+
+<br>
+
+<div class="card">
+
+<p>🟢 Network simulation service is running.</p>
+
+<hr><br>
+
+<p>📡 Router R2 has received a new packet.</p>
+
+<hr><br>
+
+<p>🔐 Firewall rules are active.</p>
+
+<hr><br>
+
+<p>☁ Cloud network backup is ready.</p>
+
+<hr><br>
+
+<p>⚡ Network latency is within normal range.</p>
+
+</div>
+
+</section>
+
+
+<!-- ==================================================
+PROFILE
+================================================== -->
+
+<section id="profile"
+class="page">
+
+<h2>👤 Profile</h2>
+
+<br>
+
+<div class="card">
+
+<div class="input-group">
+
+<label>Name</label>
+
+<input id="profileName">
+
+</div>
+
+<div class="input-group">
+
+<label>Email</label>
+
+<input id="profileEmail"
+readonly>
+
+</div>
+
+<div class="input-group">
+
+<label>Role</label>
+
+<input value="Network Administrator"
+readonly>
+
+</div>
+
+<button class="primary"
+onclick="saveProfile()">
+Save Profile
+</button>
+
+</div>
+
+</section>
+
+
+<!-- ==================================================
+SECURITY
+================================================== -->
+
+<section id="security"
+class="page">
+
+<h2>🔐 Security</h2>
+
+<br>
+
+<div class="card">
+
+<h3>Change Password</h3>
+
+<br>
+
+<div class="input-group">
+
+<label>Current Password</label>
+
+<input type="password"
+id="currentPassword">
+
+</div>
+
+<div class="input-group">
+
+<label>New Password</label>
+
+<input type="password"
+id="newPassword">
+
+</div>
+
+<div class="input-group">
+
+<label>Confirm Password</label>
+
+<input type="password"
+id="confirmPassword">
+
+</div>
+
+<button class="primary"
+onclick="changePassword()">
+Update Password
+</button>
+
+</div>
+
+
+<div class="card">
+
+<h3>Security Status</h3>
+
+<br>
+
+<p>🔒 Password Protection — Active</p>
+<p>🛡 Firewall — Active</p>
+<p>🔑 Session Authentication — Active</p>
+<p>☁ Cloud Backup — Ready</p>
+<p>📱 Two Factor Authentication — Available</p>
+
+</div>
+
+</section>
+
+
+<!-- ==================================================
+ADMIN
+================================================== -->
+
+<section id="admin"
+class="page">
+
+<h2>⚙ Admin Dashboard</h2>
+
+<br>
+
+<div class="stats">
+
+<div class="stat">
+<p>Users</p>
+<strong id="adminUsers">0</strong>
+</div>
+
+<div class="stat">
+<p>Packets</p>
+<strong id="adminPackets">0</strong>
+</div>
+
+<div class="stat">
+<p>Successful</p>
+<strong id="adminSuccess">0</strong>
+</div>
+
+<div class="stat">
+<p>Network Uptime</p>
+<strong>99.9%</strong>
+</div>
+
+</div>
+
+
+<div class="card">
+
+<h3>Latest System Features</h3>
+
+<br>
+
+<p>✅ Real-time packet simulation</p>
+<p>✅ Dynamic routing</p>
+<p>✅ Shortest-path calculation</p>
+<p>✅ TCP / UDP / HTTP / DNS support</p>
+<p>✅ Network topology visualization</p>
+<p>✅ Packet activity logs</p>
+<p>✅ Network analytics</p>
+<p>✅ Login and authentication</p>
+<p>✅ User profile management</p>
+<p>✅ Security dashboard</p>
+<p>✅ Dark mode</p>
+<p>✅ Responsive interface</p>
+
+</div>
+
+</section>
+
+</div>
+
+</main>
+
+</div>
+
+
+<script>
+
+/* ==================================================
+STORAGE
+================================================== */
+
+if (!localStorage.getItem("netRouteUsers")) {
+
+    localStorage.setItem(
+        "netRouteUsers",
+        JSON.stringify([
+            {
+                name:"Network Admin",
+                email:"admin@netroute.com",
+                password:"admin123"
+            }
+        ])
+    );
+
+}
+
+if (!localStorage.getItem("netRoutePackets")) {
+
+    localStorage.setItem(
+        "netRoutePackets",
+        JSON.stringify([])
+    );
+
+}
+
+
+/* ==================================================
+AUTH
+================================================== */
+
+function showSignup() {
+
+    document.getElementById("loginForm")
+        .classList.add("hidden");
+
+    document.getElementById("signupForm")
+        .classList.remove("hidden");
+
+}
+
+
+function showLogin() {
+
+    document.getElementById("signupForm")
+        .classList.add("hidden");
+
+    document.getElementById("loginForm")
+        .classList.remove("hidden");
+
+}
+
+
+function togglePassword(id) {
+
+    let input =
+        document.getElementById(id);
+
+    input.type =
+        input.type === "password"
+        ? "text"
+        : "password";
+
+}
+
+
+function signup() {
+
+    let name =
+        document.getElementById("signupName").value.trim();
+
+    let email =
+        document.getElementById("signupEmail").value.trim();
+
+    let password =
+        document.getElementById("signupPassword").value;
+
+    if (!name || !email || !password) {
+
+        alert("Please fill all fields.");
+        return;
+
+    }
+
+    if (password.length < 6) {
+
+        alert("Password must contain at least 6 characters.");
+        return;
+
+    }
+
+    let users =
+        JSON.parse(
+            localStorage.getItem("netRouteUsers")
+        );
+
+    if (
+        users.some(
+            user => user.email === email
+        )
+    ) {
+
+        alert("Email already exists.");
+        return;
+
+    }
+
+    users.push({
+        name:name,
+        email:email,
+        password:password
+    });
+
+    localStorage.setItem(
+        "netRouteUsers",
+        JSON.stringify(users)
+    );
+
+    alert("Account created successfully!");
+
+    showLogin();
+
+}
+
+
+function login() {
+
+    let email =
+        document.getElementById("loginEmail").value.trim();
+
+    let password =
+        document.getElementById("loginPassword").value;
+
+    let users =
+        JSON.parse(
+            localStorage.getItem("netRouteUsers")
+        );
+
+    let user =
+        users.find(
+            u =>
+            u.email === email &&
+            u.password === password
+        );
+
+    if (!user) {
+
+        alert("Invalid email or password.");
+        return;
+
+    }
+
+    localStorage.setItem(
+        "netRouteCurrentUser",
+        email
+    );
+
+    loadApp();
+
+}
+
+
+function logout() {
+
+    localStorage.removeItem(
+        "netRouteCurrentUser"
+    );
+
+    document.getElementById("app")
+        .style.display = "none";
+
+    document.getElementById("authPage")
+        .style.display = "flex";
+
+}
+
+
+/* ==================================================
+APP
+================================================== */
+
+function loadApp() {
+
+    document.getElementById("authPage")
+        .style.display = "none";
+
+    document.getElementById("app")
+        .style.display = "block";
+
+    loadProfile();
+
+    updateDashboard();
+
+    renderLogs();
+
+    updateAnalytics();
+
+    updateAdmin();
+
+}
+
+
+function showPage(page) {
+
+    document.querySelectorAll(".page")
+        .forEach(
+            p => p.classList.remove("active")
+        );
+
+    document.getElementById(page)
+        .classList.add("active");
+
+    let titles = {
+
+        dashboard:"Dashboard",
+        simulator:"Packet Simulator",
+        topology:"Network Topology",
+        routing:"Routing Table",
+        packets:"Packet Logs",
+        analytics:"Network Analytics",
+        notifications:"Notifications",
+        profile:"Profile",
+        security:"Security",
+        admin:"Admin Dashboard"
+
+    };
+
+    document.getElementById("pageTitle")
+        .textContent = titles[page];
+
+}
+
+
+/* ==================================================
+PACKET ROUTING
+================================================== */
+
+function sendPacket() {
+
+    let source =
+        document.getElementById("source").value;
+
+    let destination =
+        document.getElementById("destination").value;
+
+    let protocol =
+        document.getElementById("protocol").value;
+
+    let size =
+        Number(
+            document.getElementById("packetSize").value
+        );
+
+    if (source === destination) {
+
+        alert("Source and destination cannot be the same.");
+        return;
+
+    }
+
+    let route =
+        calculateRoute(source,destination);
+
+    animatePacket(route);
+
+    let latency =
+        Math.floor(
+            Math.random()*40
+        ) + 10;
+
+    let packet = {
+
+        id:"PKT-" + Date.now(),
+
+        source:source,
+
+        destination:destination,
+
+        protocol:protocol,
+
+        size:size,
+
+        route:route.join(" → "),
+
+        latency:latency,
+
+        status:"Delivered",
+
+        time:new Date().toLocaleTimeString()
+
+    };
+
+    let packets =
+        JSON.parse(
+            localStorage.getItem("netRoutePackets")
+        );
+
+    packets.unshift(packet);
+
+    localStorage.setItem(
+        "netRoutePackets",
+        JSON.stringify(packets)
+    );
+
+    updateDashboard();
+
+    renderLogs();
+
+    updateAnalytics();
+
+    updateAdmin();
+
+}
+
+
+/* ==================================================
+ROUTE CALCULATION
+================================================== */
+
+function calculateRoute(source,destination) {
+
+    let routes = {
+
+        "PC-A": ["PC-A","R1","R2","R3","S1"],
+
+        "PC-B": ["PC-B","R1","R2","R3","S1"],
+
+        "R1": ["R1","R2","R3"],
+
+        "R2": ["R2","R3"],
+
+        "R3": ["R3","S1"],
+
+        "Server-S1": ["S1"]
+
+    };
+
+    let route =
+        routes[source] || ["R1","R2","R3"];
+
+    if (
+        destination === "PC-A"
+    ) {
+
+        return ["S1","R3","R2","R1","PC-A"];
+
+    }
+
+    if (
+        destination === "PC-B"
+    ) {
+
+        return ["R3","R2","R1","PC-B"];
+
+    }
+
+    if (
+        destination === "R1"
+    ) {
+
+        return ["R3","R2","R1"];
+
+    }
+
+    if (
+        destination === "R2"
+    ) {
+
+        return ["R3","R2"];
+
+    }
+
+    if (
+        destination === "R3"
+    ) {
+
+        return ["R2","R3"];
+
+    }
+
+    if (
+        destination === "Server-S1"
+    ) {
+
+        return ["R1","R2","R3","S1"];
+
+    }
+
+    return route;
+
+}
+
+
+/* ==================================================
+PACKET ANIMATION
+================================================== */
+
+function animatePacket(route) {
+
+    let area =
+        document.getElementById("networkArea");
+
+    let nodes = {
+
+        "PC-A":
+            document.getElementById("nodeA"),
+
+        "PC-B":
+            document.getElementById("nodeB"),
+
+        "R1":
+            document.getElementById("nodeR1"),
+
+        "R2":
+            document.getElementById("nodeR2"),
+
+        "R3":
+            document.getElementById("nodeR3"),
+
+        "S1":
+            document.getElementById("nodeS1")
+
+    };
+
+    let packet =
+        document.createElement("div");
+
+    packet.className = "packet";
+
+    area.appendChild(packet);
+
+    let index = 0;
+
+    function move() {
+
+        if (index >= route.length) {
+
+            packet.remove();
+            return;
+
+        }
+
+        let node =
+            nodes[route[index]];
+
+        let areaRect =
+            area.getBoundingClientRect();
+
+        let nodeRect =
+            node.getBoundingClientRect();
+
+        let x =
+            nodeRect.left -
+            areaRect.left +
+            nodeRect.width/2;
+
+        let y =
+            nodeRect.top -
+            areaRect.top +
+            nodeRect.height/2;
+
+        packet.style.transition =
+            "left .7s linear, top .7s linear";
+
+        packet.style.left =
+            x + "px";
+
+        packet.style.top =
+            y + "px";
+
+        index++;
+
+        setTimeout(move,750);
+
+    }
+
+    move();
+
+}
+
+
+/* ==================================================
+QUICK TEST
+================================================== */
+
+function quickPacket() {
+
+    document.getElementById("source")
+        .value = "PC-A";
+
+    document.getElementById("destination")
+        .value = "Server-S1";
+
+    document.getElementById("protocol")
+        .value = "TCP";
+
+    sendPacket();
+
+}
+
+
+/* ==================================================
+LOGS
+================================================== */
+
+function renderLogs() {
+
+    let packets =
+        JSON.parse(
+            localStorage.getItem("netRoutePackets")
+        );
+
+    let container =
+        document.getElementById("packetLogs");
+
+    container.innerHTML = "";
+
+    packets.forEach(p => {
+
+        container.innerHTML += `
+
+        <div class="log">
+
+        <b>${p.id}</b>
+
+        <br>
+
+        ${p.source}
+        →
+        ${p.destination}
+
+        <br>
+
+        Protocol:
+        <b>${p.protocol}</b>
+
+        |
+        Size:
+        ${p.size} bytes
+
+        <br>
+
+        Route:
+        ${p.route}
+
+        <br>
+
+        Latency:
+        ${p.latency} ms
+
+        |
+        <span class="badge success">
+        ${p.status}
+        </span>
+
+        <br>
+
+        <small>
+        ${p.time}
+        </small>
+
+        </div>
+
+        `;
+
+    });
+
+}
+
+
+function filterLogs() {
+
+    let search =
+        document.getElementById("logSearch")
+        .value
+        .toLowerCase();
+
+    document.querySelectorAll(".log")
+        .forEach(log => {
+
+            log.style.display =
+                log.innerText
+                .toLowerCase()
+                .includes(search)
+                ? "block"
+                : "none";
+
+        });
+
+}
+
+
+function clearLogs() {
+
+    if (!confirm("Clear all packet logs?"))
+        return;
+
+    localStorage.setItem(
+        "netRoutePackets",
+        JSON.stringify([])
+    );
+
+    renderLogs();
+
+    updateDashboard();
+
+    updateAnalytics();
+
+    updateAdmin();
+
+}
+
+
+/* ==================================================
+DASHBOARD
+================================================== */
+
+function updateDashboard() {
+
+    let packets =
+        JSON.parse(
+            localStorage.getItem("netRoutePackets")
+        );
+
+    let successful =
+        packets.filter(
+            p => p.status === "Delivered"
+        ).length;
+
+    document.getElementById("packetCount")
+        .textContent = packets.length;
+
+    document.getElementById("successCount")
+        .textContent = successful;
+
+    document.getElementById("failedCount")
+        .textContent = 0;
+
+}
+
+
+/* ==================================================
+ANALYTICS
+================================================== */
+
+function updateAnalytics() {
+
+    let packets =
+        JSON.parse(
+            localStorage.getItem("netRoutePackets")
+        );
+
+    let tcp =
+        packets.filter(
+            p => p.protocol === "TCP"
+        ).length;
+
+    let udp =
+        packets.filter(
+            p => p.protocol === "UDP"
+        ).length;
+
+    document.getElementById("analyticsPackets")
+        .textContent = packets.length;
+
+    document.getElementById("tcpPackets")
+        .textContent = tcp;
+
+    document.getElementById("udpPackets")
+        .textContent = udp;
+
+    if (packets.length) {
+
+        let average =
+            packets.reduce(
+                (sum,p) => sum + p.latency,
+                0
+            ) / packets.length;
+
+        document.getElementById("latency")
+            .textContent =
+            Math.round(average) + " ms";
+
+    }
+
+}
+
+
+/* ==================================================
+ADMIN
+================================================== */
+
+function updateAdmin() {
+
+    let users =
+        JSON.parse(
+            localStorage.getItem("netRouteUsers")
+        );
+
+    let packets =
+        JSON.parse(
+            localStorage.getItem("netRoutePackets")
+        );
+
+    document.getElementById("adminUsers")
+        .textContent = users.length;
+
+    document.getElementById("adminPackets")
+        .textContent = packets.length;
+
+    document.getElementById("adminSuccess")
+        .textContent =
+        packets.filter(
+            p => p.status === "Delivered"
+        ).length;
+
+}
+
+
+/* ==================================================
+PROFILE
+================================================== */
+
+function loadProfile() {
+
+    let email =
+        localStorage.getItem(
+            "netRouteCurrentUser"
+        );
+
+    let users =
+        JSON.parse(
+            localStorage.getItem("netRouteUsers")
+        );
+
+    let user =
+        users.find(
+            u => u.email === email
+        );
+
+    if (!user) return;
+
+    document.getElementById("profileName")
+        .value = user.name;
+
+    document.getElementById("profileEmail")
+        .value = user.email;
+
+    document.getElementById("topUser")
+        .textContent = user.name;
+
+}
+
+
+function saveProfile() {
+
+    let email =
+        localStorage.getItem(
+            "netRouteCurrentUser"
+        );
+
+    let users =
+        JSON.parse(
+            localStorage.getItem("netRouteUsers")
+        );
+
+    let user =
+        users.find(
+            u => u.email === email
+        );
+
+    user.name =
+        document.getElementById("profileName")
+        .value;
+
+    localStorage.setItem(
+        "netRouteUsers",
+        JSON.stringify(users)
+    );
+
+    loadProfile();
+
+    alert("Profile updated successfully.");
+
+}
+
+
+/* ==================================================
+CHANGE PASSWORD
+================================================== */
+
+function changePassword() {
+
+    let email =
+        localStorage.getItem(
+            "netRouteCurrentUser"
+        );
+
+    let current =
+        document.getElementById(
+            "currentPassword"
+        ).value;
+
+    let newPassword =
+        document.getElementById(
+            "newPassword"
+        ).value;
+
+    let confirmPassword =
+        document.getElementById(
+            "confirmPassword"
+        ).value;
+
+    let users =
+        JSON.parse(
+            localStorage.getItem("netRouteUsers")
+        );
+
+    let user =
+        users.find(
+            u => u.email === email
+        );
+
+    if (user.password !== current) {
+
+        alert("Current password is incorrect.");
+        return;
+
+    }
+
+    if (newPassword.length < 6) {
+
+        alert("Password must contain at least 6 characters.");
+        return;
+
+    }
+
+    if (newPassword !== confirmPassword) {
+
+        alert("Passwords do not match.");
+        return;
+
+    }
+
+    user.password = newPassword;
+
+    localStorage.setItem(
+        "netRouteUsers",
+        JSON.stringify(users)
+    );
+
+    alert("Password changed successfully.");
+
+}
+
+
+/* ==================================================
+DARK MODE
+================================================== */
+
+function toggleDarkMode() {
+
+    document.body.classList.toggle("dark");
+
+    localStorage.setItem(
+        "netRouteDark",
+        document.body.classList.contains("dark")
+    );
+
+}
+
+
+if (
+    localStorage.getItem("netRouteDark")
+    === "true"
+) {
+
+    document.body.classList.add("dark");
+
+}
+
+
+/* ==================================================
+AUTO LOGIN
+================================================== */
+
+if (
+    localStorage.getItem(
+        "netRouteCurrentUser"
+    )
+) {
+
+    loadApp();
+
+}
+
+</script>
+
+</body>
+</html>
